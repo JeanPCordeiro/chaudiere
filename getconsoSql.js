@@ -24,6 +24,7 @@ const POWER_RECYCLE = 2;
 const POWER_BURN = 3;
 
 async function main() {
+  while (true) {
   entree = Date.now();
   const tplink = await login(TPLINK_USER, TPLINK_PASS, TPLINK_TERM);
   const dl = await tplink.getDeviceList();
@@ -55,7 +56,7 @@ async function main() {
 
   duree = Date.now() - entree;
   console.log(values, duree);
-
+}
 }
 
 main();
