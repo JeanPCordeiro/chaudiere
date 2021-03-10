@@ -2,6 +2,9 @@ FROM node:buster
 ENV TZ Europe/Paris
 WORKDIR /usr/src/app
 COPY package*.json ./
+RUN npm install tplink-cloud-api
+RUN npm install uuid
+RUN npm install mysql
 RUN npm install
 COPY GetConsoMySQL.js .
 CMD [ "node", "GetConsoMySQL.js" ]
