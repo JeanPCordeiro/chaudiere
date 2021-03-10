@@ -17,7 +17,6 @@ var config =
   password: DBPWD,
   database: DATABASE,
   port: DBPORT,
-  ssl: true
 };
 
 const conn = new mysql.createConnection(config);
