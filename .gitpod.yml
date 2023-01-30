@@ -1,5 +1,8 @@
 image: jpcordeiro/gitpod-kube:latest
 
+tasks:
+  - init: npm install && make
+
 vscode:
   extensions:
     - ms-vscode.makefile-tools
