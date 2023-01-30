@@ -1,8 +1,8 @@
-const { login } = require("tplink-cloud-api");
-const uuidV4 = require("uuid/v4");
+const { login } = require('tplink-cloud-api');
+const { v4: uuidv4 } = require('uuid');
 const mysql = require('mysql');
 
-const TPLINK_TERM = uuidV4();
+const TPLINK_TERM = uuidv4();
 
 const TPLINK_USER = process.env.TPLINK_USER;
 const TPLINK_PASS = process.env.TPLINK_PASS;
@@ -24,39 +24,41 @@ const POWER_RECYCLE = 2;
 const POWER_BURN = 3;
 
 async function main() {
-  while (true) {
-    entree = Date.now();
-    const tplink = await login(TPLINK_USER, TPLINK_PASS, TPLINK_TERM);
-    const dl = await tplink.getDeviceList();
-    let myPlug = await tplink.getHS110(TPLINK_DEVICE);
-    let powerMW = (await myPlug.getPowerUsage()).power_mw;
-    var date = new Date();
-    dateS = date.getFullYear() + ("0" + (date.getMonth() + 1)).slice(-2) + ("0" + date.getDate()).slice(-2) + ("0" + date.getHours()).slice(-2) + ("0" + date.getMinutes()).slice(-2) + ("0" + date.getSeconds()).slice(-2) + ("00" + date.getMilliseconds()).slice(-3);
-    switch (true) {
-      case (powerMW < POWER_LOW):
-        state = POWER_STANDBY;
-        break;
-      case (powerMW < POWER_HIGH):
-        state = POWER_RECYCLE;
-        break;
-      default:
-        state = POWER_BURN;
-        break;
-    }
-    values = dateS + ',' + powerMW + ',' + state;
-    const connection = await mysql.createConnection({
-      host: DBHOST,
-      port: DBPORT,
-      user: DBUSER,
-      password: DBPWD,
-      database: DATABASE
-    });
-    connection.query("INSERT INTO " + TABLE + " VALUES(" + values + ")");
-    connection.end();
-    duree = Date.now() - entree;
-    console.log(values, duree);
-    await new Promise(r => setTimeout(r, 1000 - duree));
+  entree = Date.now();
+  const tplink = await login(TPLINK_USER, TPLINK_PASS, TPLINK_TERM);
+  const dl = await tplink.getDeviceList();
+  let myPlug = await tplink.getHS110(TPLINK_DEVICE);
+  let powerMW = (await myPlug.getPowerUsage()).power_mw;
+  var date = new Date();
+  dateS = date.getFullYear() + ("0" + (date.getMonth() + 1)).slice(-2) + ("0" + date.getDate()).slice(-2) + ("0" + date.getHours()).slice(-2) + ("0" + date.getMinutes()).slice(-2) + ("0" + date.getSeconds()).slice(-2) + ("00" + date.getMilliseconds()).slice(-3);
+  switch (true) {
+    case (powerMW < POWER_LOW):
+      state = POWER_STANDBY;
+      break;
+    case (powerMW < POWER_HIGH):
+      state = POWER_RECYCLE;
+      break;
+    default:
+      state = POWER_BURN;
+      break;
   }
+  values = dateS + ',' + powerMW + ',' + state;
+  
+  const connection = await mysql.createConnection({
+    host: DBHOST,
+    port: DBPORT,
+    user: DBUSER,
+    password: DBPWD,
+    database: DATABASE
+  });
+  
+  connection.query("INSERT INTO " + TABLE + " VALUES(" + values + ")");
+  connection.end();
+  
+  duree = Date.now() - entree;
+  console.log(values, duree);
+  await new Promise(r => setTimeout(r, 1000 - duree));
+
 }
 
 main();
