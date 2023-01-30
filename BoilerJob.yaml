@@ -1,0 +1,108 @@
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: boiler
+---
+#
+# MySQL PVC
+#
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-volume
+  namespace: boiler
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+#
+# MySQL Deployment
+#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: boiler
+  labels:
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: database
+          image: mysql
+          # add root password
+          env:
+            - name: "MYSQL_ALLOW_EMPTY_PASSWORD"
+              value: "yes"
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: mysql-initdb
+              mountPath: /docker-entrypoint-initdb.d
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-initdb
+          configMap:
+            name: mysql-initdb-config
+        - name: mysql-data
+          persistentVolumeClaim:
+            claimName: mysql-volume
+---
+#
+# MySQL Init DataBase
+#
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-initdb-config
+  namespace: boiler
+data:
+  init.sql: |
+    CREATE DATABASE IF NOT EXISTS boiler;
+---
+#
+# MySQL Service
+#
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+  namespace: boiler
+spec:
+  ports:
+    - port: 3306
+      protocol: TCP
+  selector:
+    app: mysql
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: get
+  namespace: boiler
+spec:
+  schedule: "* * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: get
+            image: jpcordeiro/boiler-get
+            imagePullPolicy: IfNotPresent
+          restartPolicy: OnFailure
