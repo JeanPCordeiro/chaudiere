@@ -5,7 +5,7 @@ ENV TZ Europe/Paris
 WORKDIR /usr/src/app
 RUN npm install tplink-cloud-api
 RUN npm install uuid
-RUN npm install mysql
+RUN npm install mongoose
 RUN npm audit fix --force
-COPY GetConsoMySQL.js .
-CMD [ "node", "GetConsoMySQL.js" ]
+COPY GetConsoMongoDB.js .
+CMD [ "node", "GetConsoMongoDB.js" ]
