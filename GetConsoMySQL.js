@@ -14,9 +14,11 @@ const DBUSER = process.env.DBUSER;
 const DBPWD = process.env.DBPWD;
 const DATABASE = process.env.DATABASE;
 const TABLE = process.env.TABLE;
-const POWER_LOW = process.env.POWER_LOW;
-const POWER_HIGH = process.env.POWER_HIGH;
-const LITERS_HOUR = process.env.LITERS_HOUR;
+
+
+const POWER_LOW = 15000;
+const POWER_HIGH = 100000;
+const LITERS_HOUR = 2.27125;
 
 const POWER_OFF = 0;
 const POWER_STANDBY = 1;
@@ -29,8 +31,6 @@ async function main() {
   const dl = await tplink.getDeviceList();
   let myPlug = await tplink.getHS110(TPLINK_DEVICE);
   let powerMW = (await myPlug.getPowerUsage()).power_mw;
-  var date = new Date();
-  dateS = date.getFullYear() + ("0" + (date.getMonth() + 1)).slice(-2) + ("0" + date.getDate()).slice(-2) + ("0" + date.getHours()).slice(-2) + ("0" + date.getMinutes()).slice(-2) + ("0" + date.getSeconds()).slice(-2) + ("00" + date.getMilliseconds()).slice(-3);
   switch (true) {
     case (powerMW < POWER_LOW):
       state = POWER_STANDBY;
@@ -42,7 +42,9 @@ async function main() {
       state = POWER_BURN;
       break;
   }
-  values = dateS + ',' + powerMW + ',' + state;
+  var date = new Date();
+  var mySQLDateString = date.toISOString().slice(0, 19).replace('T', ' ');
+  values = "'"+mySQLDateString+"'," + powerMW + ',' + state;
   
   const connection = await mysql.createConnection({
     host: DBHOST,

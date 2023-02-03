@@ -1,0 +1,157 @@
+---
+#
+# MySQL PVC
+#
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-volume
+  namespace: boiler
+spec:
+  storageClassName: "longhorn"
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+#
+# MySQL Deployment
+#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: boiler
+  labels:
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: database
+          image: mysql:5.7
+          args:
+            # mount volume
+            - "--ignore-db-dir=lost+found"
+          # add root password
+          env:
+            - name: MYSQL_ALLOW_EMPTY_PASSWORD
+              value: "yes"
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: mysql-initdb
+              mountPath: /docker-entrypoint-initdb.d
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-initdb
+          configMap:
+            name: mysql-initdb-config
+        - name: mysql-data
+          persistentVolumeClaim:
+            claimName: mysql-volume
+---
+#
+# MySQL Init DataBase
+#
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-initdb-config
+  namespace: boiler
+data:
+  init.sql: |
+    CREATE DATABASE IF NOT EXISTS Boiler;
+    USE Boiler;
+    CREATE TABLE Boiler ( time timestamp, powerMW int, state int );
+---
+#
+# MySQL Service
+#
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+  namespace: boiler
+spec:
+  ports:
+    - port: 3306
+      protocol: TCP
+  selector:
+    app: mysql
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: grafana
+  name: grafana
+  namespace: boiler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - image: grafana/grafana
+        name: grafana
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-service
+  namespace: boiler
+spec:
+  ports:
+    - port: 3000
+      name: http
+      protocol: TCP
+  selector:
+    app: grafana
+---
+#
+# Grafana Ingress
+#
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  namespace: boiler
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.middlewares: default-redirect-https@kubernetescrd
+spec:
+  rules:
+    - host: grafana.boiler.lean-sys.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana-service
+                port:
+                  number: 3000
+  tls:
+    - secretName: grafana-tls
+      hosts:
+        - grafana.boiler.lean-sys.com

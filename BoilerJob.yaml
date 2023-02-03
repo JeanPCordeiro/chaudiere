@@ -16,18 +16,20 @@ spec:
             imagePullPolicy: Always
             env:
               - name: TPLINK_USER
-                value: "xxxxx"
+                value: "jeanpierre.cordeiro@gmail.com"
               - name: TPLINK_PASS
-                value: "xxxxx"
+                value: "xxxxxx"
               - name: TPLINK_DEVICE
-                value: "xxxxx"
+                value: "xxxxxx"
               - name: DBHOST
-                value: mongo-service
+                value: mysql-service
+              - name: DBUSER
+                value: root
               - name: DBPORT
-                value: "27017"
+                value: "3306"
               - name: DATABASE
                 value: "Boiler"
               - name: TABLE
-                value: "power"
+                value: "Boiler"
           restartPolicy: OnFailure
 
