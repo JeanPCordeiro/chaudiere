@@ -1,0 +1,150 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: grafana
+  name: grafana
+  namespace: boiler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - image: grafana/grafana
+        name: grafana
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-service
+  namespace: boiler
+spec:
+  ports:
+    - port: 3000
+      name: http
+      protocol: TCP
+  selector:
+    app: grafana
+---
+#
+# Grafana Ingress
+#
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  namespace: boiler
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.middlewares: default-redirect-https@kubernetescrd
+spec:
+  rules:
+    - host: grafana.boiler.lean-sys.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana-service
+                port:
+                  number: 3000
+  tls:
+    - secretName: grafana-tls
+      hosts:
+        - grafana.boiler.lean-sys.com
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: graphite
+  name: graphite
+  namespace: boiler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: graphite
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: graphite
+    spec:
+      containers:
+      - image: graphiteapp/graphite-statsd
+        name: graphite
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: graphite-service
+  namespace: boiler
+spec:
+  ports:
+    - port: 80
+      name: http
+      protocol: TCP
+    - port: 2003
+      name: plaintext
+      protocol: TCP
+    - port: 2004
+      name: pickle
+      protocol: TCP
+    - port: 2023
+      name: u1
+      protocol: TCP
+    - port: 2024
+      name: u2
+      protocol: TCP
+    - port: 8125
+      name: incoming-udp
+      protocol: UDP
+    - port: 8126
+      name: admin
+      protocol: TCP
+  selector:
+    app: graphite
+---
+#
+# Graphite Ingress
+#
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: graphite-ingress
+  namespace: boiler
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.middlewares: default-redirect-https@kubernetescrd
+spec:
+  rules:
+    - host: graphite.boiler.lean-sys.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: graphite-service
+                port:
+                  number: 80
+  tls:
+    - secretName: graphite-tls
+      hosts:
+        - graphite.boiler.lean-sys.com
