@@ -45,7 +45,8 @@ function readData() {
   let date = new Date();
   date.setDate(date.getDate() - 1);
   let dateS = date.getFullYear() + ("0" + (date.getMonth() + 1)).slice(-2) + ("0" + date.getDate()).slice(-2);
-  let sql = "SELECT * FROM " + TABLE + " WHERE DATE LIKE '" + dateS + "%'";
+  console.log(dateS);
+  let sql = "SELECT * FROM " + TABLE + " WHERE TIME LIKE '" + dateS + "%'";
   conn.query(sql,
     function (err, results, fields) {
       if (err) throw err;

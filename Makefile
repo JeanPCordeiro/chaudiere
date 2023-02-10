@@ -8,6 +8,7 @@ export DOMAIN ?= lean-sys.com
 DOCKER_USERNAME ?= jpcordeiro
 APPLICATION_RELEASE ?= latest
 APPLICATION_GET ?= boiler-get
+APPLICATION_API ?= boiler-api
 
 info:
 	printf "\033c"
@@ -39,8 +40,15 @@ k3s_config:
 
 
 build_get:
-	docker build -f Dockerfile.GetConso --tag ${DOCKER_USERNAME}/${APPLICATION_GET}:${APPLICATION_RELEASE} .
+	docker build -f Dockerfile.${APPLICATION_GET} --tag ${DOCKER_USERNAME}/${APPLICATION_GET}:${APPLICATION_RELEASE} .
 
 push_get:
 	docker login -u ${DOCKER_USERNAME}
 	docker push ${DOCKER_USERNAME}/${APPLICATION_GET}:${APPLICATION_RELEASE}
+
+build_api:
+	docker build -f Dockerfile.${APPLICATION_API} --tag ${DOCKER_USERNAME}/${APPLICATION_API}:${APPLICATION_RELEASE} .
+
+push_api:
+	docker login -u ${DOCKER_USERNAME}
+	docker push ${DOCKER_USERNAME}/${APPLICATION_API}:${APPLICATION_RELEASE}

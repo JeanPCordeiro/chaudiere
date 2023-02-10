@@ -1,0 +1,8 @@
+FROM alpine
+RUN apk add --update npm
+ENV TZ Europe/Paris
+WORKDIR /usr/src/app
+RUN npm install mysql express moment
+RUN npm audit fix --force
+COPY APIConsoMySQL.js .
+CMD [ "node", "APIConsoMySQL.js" ]

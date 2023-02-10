@@ -16,7 +16,7 @@ spec:
             imagePullPolicy: Always
             env:
               - name: TPLINK_USER
-                value: "jeanpierre.cordeiro@gmail.com"
+                value: "tplinkusermail"
               - name: TPLINK_PASS
                 value: "xxxxxx"
               - name: TPLINK_DEVICE
